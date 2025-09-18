@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Carte stratégique</title>
+</head>
+<body>
+  <h2>Bienvenue {{ state.nom }} 🧩</h2>
+  <p>Points : {{ state.points }} | Or : {{ state.or }} | Troupes : {{ state.troupes }}</p>
+
+  {% if role == "admin" %}
+    <form method="POST" action="/triche">
+      <button>🎩 Tricher (+100 partout)</button>
+    </form>
+    <form method="POST" action="/reset">
+      <button style="color:red;">⚠️ Réinitialiser tout</button>
+    </form>
+  {% endif %}
+
+  <div id="message"></div>
+
+  <svg id="carte" width="1000" height="1000" style="border:1px solid black;">
+    {% for y in range(0, 1000, 10) %}
+      {% for x in range(0, 1000, 10) %}
+        {% set key = x|string + "," + y|string %}
+        {% set owner = game.grid.get(key) %}
+        <rect id="{{ key }}" x="{{ x }}" y="{{ y }}" width="10" height="10"
+              fill="{{ game.players[owner].couleur if owner else 'gray' }}"
+              stroke="black" />
+      {% endfor %}
+    {% endfor %}
+  </svg>
+
+  <script>
+    document.querySelectorAll("rect").forEach(pixel => {
+      pixel.addEventListener("click", () => {
+        const [x, y] = pixel.id.split(",").map(Number);
+        fetch("/pixel", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({x, y})
+        })
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("message").innerText = data.message;
+          location.reload();
+        });
+      });
+    });
+  </script>
+</body>
+</html>

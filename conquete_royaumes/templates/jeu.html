@@ -1,0 +1,50 @@
+<h2>👑 Bienvenue, {{ state.nom }}</h2>
+<p>Points : {{ state.points }} | Or : {{ state.or }}</p>
+
+<form method="POST" action="/action">
+  <button name="action" value="attaquer">⚔️ Attaquer</button>
+  <button name="action" value="miner">⛏️ Miner</button>
+  {% if role == "admin" %}
+    <button name="action" value="triche">🎩 Tricher</button>
+  {% endif %}
+</form>
+
+<h3>🗺️ Carte des territoires</h3>
+<svg id="map" width="600" height="200">
+  <rect id="plaine" x="50" y="50" width="100" height="100" stroke="black" />
+  <rect id="montagne" x="200" y="50" width="100" height="100" stroke="black" />
+  <rect id="foret" x="350" y="50" width="100" height="100" stroke="black" />
+</svg>
+
+<script>
+  const pseudo = "{{ state.nom }}";
+  const couleurs = {
+    {% for pseudo, joueur in game.players.items() %}
+      "{{ pseudo }}": "{{ joueur.couleur }}",
+    {% endfor %}
+  };
+  const territoires = {
+    {% for nom, owner in game.territoires.items() %}
+      "{{ nom }}": "{{ owner }}",
+    {% endfor %}
+  };
+
+  for (const [id, owner] of Object.entries(territoires)) {
+    const elem = document.getElementById(id);
+    if (owner && couleurs[owner]) {
+      elem.setAttribute("fill", couleurs[owner]);
+    } else {
+      elem.setAttribute("fill", "gray");
+    }
+  }
+
+  document.querySelectorAll("rect").forEach(zone => {
+    zone.addEventListener("click", () => {
+      fetch("/coloniser", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({pseudo: pseudo, territoire: zone.id})
+      }).then(() => location.reload());
+    });
+  });
+</script>
